@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
   title: 'ProjectFlow - Professional Project Management SaaS',
   description: 'Enterprise-grade project management for modern teams',
+  icons: {
+    icon: '/icon.png', 
+  },
 };
 
 export default function RootLayout({ children }) {
