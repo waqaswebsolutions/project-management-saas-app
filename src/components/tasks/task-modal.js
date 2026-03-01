@@ -226,11 +226,7 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
             </Button>
           </div>
 
-          {/* Debug info - remove after fixing */}
-          <div className="p-2 mt-2 text-xs border border-gray-200 rounded dark:border-gray-700">
-            <p>Form Status: {isValid ? '✅ Valid' : '❌ Invalid'}</p>
-            <p>Button Enabled: {(!mutation.isLoading && isValid) ? '✅ Yes' : '❌ No'}</p>
-          </div>
+          
         </form>
       </DialogContent>
     </Dialog>
