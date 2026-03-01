@@ -21,19 +21,37 @@ const taskSchema = z.object({
 });
 
 async function createTask(data) {
-  const response = await fetch('/api/tasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error);
+  console.log('🟡 API CALL STARTED to /api/tasks');
+  console.log('🟡 Request payload:', data);
+  
+  try {
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    console.log('🟡 Response status:', response.status);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.log('🔴 API ERROR RESPONSE:', error);
+      throw new Error(error);
+    }
+    
+    const result = await response.json();
+    console.log('🟢 API SUCCESS:', result);
+    return result;
+  } catch (error) {
+    console.log('🔴 API CATCH ERROR:', error);
+    throw error;
   }
-  return response.json();
 }
 
 async function updateTask({ id, data }) {
+  console.log('🟡 UPDATE API CALL STARTED to /api/tasks/' + id);
+  console.log('🟡 Request payload:', data);
+  
   const response = await fetch(`/api/tasks/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -50,6 +68,8 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
   const queryClient = useQueryClient();
   const isEditing = !!task;
 
+  console.log('🟣 TaskModal Render - isOpen:', isOpen, 'isEditing:', isEditing, 'projectId:', projectId);
+
   const {
     register,
     handleSubmit,
@@ -58,7 +78,7 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
     formState: { errors, isValid },
   } = useForm({
     resolver: zodResolver(taskSchema),
-    mode: 'onChange', // Validate on change
+    mode: 'onChange',
     defaultValues: {
       title: '',
       description: '',
@@ -68,8 +88,8 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
     },
   });
 
-  // Reset form when modal opens/closes or task changes
   useEffect(() => {
+    console.log('🟢 useEffect triggered - isOpen:', isOpen, 'task:', task);
     if (isOpen) {
       if (task) {
         console.log('Editing task:', task);
@@ -80,7 +100,6 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
           priority: task.priority || 'medium',
           dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
         });
-        // Trigger validation after reset
         setTimeout(() => {
           trigger();
         }, 100);
@@ -99,9 +118,16 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
 
   const mutation = useMutation({
     mutationFn: isEditing 
-      ? (data) => updateTask({ id: task._id, data })
-      : (data) => createTask({ ...data, projectId }),
-    onSuccess: () => {
+      ? (data) => {
+          console.log('🟡 Calling updateTask with:', { id: task._id, data });
+          return updateTask({ id: task._id, data });
+        }
+      : (data) => {
+          console.log('🟡 Calling createTask with:', data);
+          return createTask({ ...data, projectId });
+        },
+    onSuccess: (data) => {
+      console.log('🟢 MUTATION SUCCESS:', data);
       queryClient.invalidateQueries(['project', projectId]);
       queryClient.invalidateQueries(['tasks']);
       queryClient.invalidateQueries(['dashboard']);
@@ -109,13 +135,24 @@ export function TaskModal({ isOpen, onClose, projectId, task }) {
       onClose();
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
+      console.log('🔴 MUTATION ERROR:', error);
       toast.error(error.message || `Failed to ${isEditing ? 'update' : 'create'} task`);
     },
   });
 
   const onSubmit = (data) => {
-    console.log('Submitting task data:', data);
+    console.log('🔵 FORM SUBMISSION STARTED');
+    console.log('🔵 Form data:', data);
+    console.log('🔵 Validation state - isValid:', isValid);
+    console.log('🔵 Validation errors:', errors);
+    
+    if (!isValid) {
+      console.log('🔴 Form is invalid, not submitting');
+      toast.error('Please fix validation errors first');
+      return;
+    }
+    
+    console.log('🟢 Form is valid, calling mutation...');
     mutation.mutate(data);
   };
 
