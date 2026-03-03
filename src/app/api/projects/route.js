@@ -3,9 +3,13 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/connect';
 import Project from '@/models/Project';
 
-export async function GET() {
+export async function GET(request) {
   try {
     const { userId } = await auth();
+    const { searchParams } = new URL(request.url);
+    
+    // Get search parameter
+    const search = searchParams.get('search') || '';
 
     if (!userId) {
       return NextResponse.json(
@@ -14,17 +18,27 @@ export async function GET() {
       );
     }
 
-    console.log('Fetching projects for user:', userId);
+    console.log('Fetching projects for user:', userId, 'Search:', search);
     
     await connectToDatabase();
 
-    const projects = await Project.find({ clerkId: userId })
+    // Build query with search
+    let query = { clerkId: userId };
+    
+    // Add search filter if search term exists
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const projects = await Project.find(query)
       .sort({ createdAt: -1 })
       .lean();
 
     console.log(`Found ${projects.length} projects`);
     
-    // Always return an array, even if empty
     return NextResponse.json(projects || []);
     
   } catch (error) {
@@ -64,26 +78,11 @@ export async function POST(request) {
     
     const { name, description, status, priority, startDate, endDate } = body;
 
-    // Validate required fields
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { error: 'Project name is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!description?.trim()) {
-      return NextResponse.json(
-        { error: 'Project description is required' },
-        { status: 400 }
-      );
-    }
-
     await connectToDatabase();
 
     const projectData = {
-      name: name.trim(),
-      description: description.trim(),
+      name: name?.trim() || 'Untitled Project',
+      description: description?.trim() || 'No description provided',
       clerkId: userId,
       status: status || 'active',
       priority: priority || 'medium',

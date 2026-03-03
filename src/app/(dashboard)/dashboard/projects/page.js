@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, AlertCircle, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { formatDate, getStatusColor, truncateText } from '@/lib/utils';
 import { ProjectModal } from '@/components/projects/project-modal';
 import { DeleteConfirmDialog } from '@/components/shared/delete-confirm-dialog';
 
-async function fetchProjects() {
+async function fetchProjects(searchTerm) {
   console.log('Fetching projects...');
-  const response = await fetch('/api/projects');
+  
+  const url = searchTerm 
+    ? `/api/projects?search=${encodeURIComponent(searchTerm)}`
+    : '/api/projects';
+  
+  const response = await fetch(url);
   
   if (!response.ok) {
     const errorText = await response.text();
@@ -57,6 +63,17 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const queryClient = useQueryClient();
 
@@ -67,8 +84,8 @@ export default function ProjectsPage() {
     refetch,
     isError 
   } = useQuery({
-    queryKey: ['projects'],
-    queryFn: fetchProjects,
+    queryKey: ['projects', debouncedSearchTerm], // Use debounced term
+    queryFn: () => fetchProjects(debouncedSearchTerm),
     retry: 1,
   });
 
@@ -154,6 +171,7 @@ export default function ProjectsPage() {
           </div>
           <Skeleton className="w-full h-10 sm:w-32" />
         </div>
+        <Skeleton className="w-full h-10" />
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...Array(8)].map((_, i) => (
             <Card key={i}>
@@ -173,7 +191,7 @@ export default function ProjectsPage() {
   }
 
   return (
-  <div className="px-4 mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
+    <div className="px-4 mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
       {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -190,26 +208,73 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
+      {/* Search Bar - Fixed Layout */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="w-4 h-4 text-gray-400" />
+          </div>
+          <Input
+            type="text"
+            placeholder="Search projects by name or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setSearchTerm('')}
+            className="whitespace-nowrap"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
       {/* Empty State */}
       {(!projects || projects.length === 0) ? (
         <Card>
           <CardContent className="px-4 py-16 text-center sm:px-6 lg:px-8">
             <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full sm:w-32 sm:h-32 dark:bg-gray-800">
-              <Plus className="w-12 h-12 text-gray-400 sm:w-16 sm:h-16" />
+              {searchTerm ? (
+                <Search className="w-12 h-12 text-gray-400 sm:w-16 sm:h-16" />
+              ) : (
+                <Plus className="w-12 h-12 text-gray-400 sm:w-16 sm:h-16" />
+              )}
             </div>
             <h3 className="mb-2 text-xl font-medium text-gray-900 dark:text-white lg:text-2xl">
-              No projects yet
+              {searchTerm ? 'No projects found' : 'No projects yet'}
             </h3>
             <p className="max-w-md mx-auto mb-6 text-gray-500 dark:text-gray-400">
-              Get started by creating your first project. Projects help you organize and track your work.
+              {searchTerm 
+                ? `No projects match "${searchTerm}". Try a different search term.`
+                : 'Get started by creating your first project. Projects help you organize and track your work.'}
             </p>
-            <Button onClick={handleCreateNew} size="lg" className="w-full sm:w-auto">
-              Create Your First Project
-            </Button>
+            {!searchTerm && (
+              <Button onClick={handleCreateNew} size="lg" className="w-full sm:w-auto">
+                Create Your First Project
+              </Button>
+            )}
+            {searchTerm && (
+              <Button onClick={() => setSearchTerm('')} variant="outline" size="lg" className="w-full sm:w-auto">
+                Clear Search
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
-        /* Projects Grid - Perfect for all screen sizes */
+        /* Projects Grid */
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {projects.map((project) => (
             <Card key={project._id} className="flex flex-col transition-shadow duration-200 hover:shadow-xl">
@@ -240,7 +305,7 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 
-                {/* Action Buttons - Perfect desktop layout */}
+                {/* Action Buttons */}
                 <div className="grid grid-cols-3 gap-1 mt-4">
                   <Link href={`/dashboard/projects/${project._id}`}>
                     <Button variant="outline" size="sm" className="w-full">
@@ -264,7 +329,7 @@ export default function ProjectsPage() {
                     disabled={deleteMutation.isLoading}
                     className="w-full"
                   >
-                    <Trash2 className="w-5 h-3.5 sm:mr-1" />
+                    <Trash2 className="w-3.5 h-3.5 sm:mr-1" />
                     <span className="hidden sm:inline">Delete</span>
                   </Button>
                 </div>
