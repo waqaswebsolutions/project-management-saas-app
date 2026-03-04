@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, AlertCircle, Search, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, AlertCircle, Search, X, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // Wait 500ms after user stops typing
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
     refetch,
     isError 
   } = useQuery({
-    queryKey: ['projects', debouncedSearchTerm], // Use debounced term
+    queryKey: ['projects', debouncedSearchTerm],
     queryFn: () => fetchProjects(debouncedSearchTerm),
     retry: 1,
   });
@@ -208,7 +208,7 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      {/* Search Bar - Fixed Layout */}
+      {/* Search Bar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -274,7 +274,7 @@ export default function ProjectsPage() {
           </CardContent>
         </Card>
       ) : (
-        /* Projects Grid */
+        /* Projects Grid with Task Counter Badges */
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {projects.map((project) => (
             <Card key={project._id} className="flex flex-col transition-shadow duration-200 hover:shadow-xl">
@@ -293,6 +293,24 @@ export default function ProjectsPage() {
                 <p className="flex-1 mb-4 text-sm text-gray-600 break-words line-clamp-3 dark:text-gray-300">
                   {truncateText(project.description, 120)}
                 </p>
+                
+                {/* Task Counter Badges - New Addition */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 rounded-full dark:bg-green-900/30">
+                    <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+                    <span className="font-medium text-green-700 dark:text-green-300">
+                      {project.taskCounts?.completed || 0}/{project.taskCounts?.total || 0}
+                    </span>
+                  </div>
+                  {project.taskCounts?.pending > 0 && (
+                    <div className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 rounded-full dark:bg-yellow-900/30">
+                      <Clock className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                      <span className="font-medium text-yellow-700 dark:text-yellow-300">
+                        {project.taskCounts?.pending} pending
+                      </span>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="pt-3 space-y-2 text-xs border-t border-gray-100 sm:text-sm dark:border-gray-800 dark:text-gray-400">
                   <div className="flex items-center justify-between">

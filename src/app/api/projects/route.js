@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/connect';
 import Project from '@/models/Project';
+import Task from '@/models/Task';
 
 export async function GET(request) {
   try {
@@ -37,9 +38,40 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log(`Found ${projects.length} projects`);
+    // Get task counts for each project
+    const projectsWithTaskCounts = await Promise.all(
+      projects.map(async (project) => {
+        const totalTasks = await Task.countDocuments({ 
+          projectId: project._id,
+          clerkId: userId 
+        });
+        
+        const completedTasks = await Task.countDocuments({ 
+          projectId: project._id,
+          clerkId: userId,
+          status: 'completed' 
+        });
+        
+        const pendingTasks = await Task.countDocuments({ 
+          projectId: project._id,
+          clerkId: userId,
+          status: { $in: ['pending', 'in-progress'] }
+        });
+
+        return {
+          ...project,
+          taskCounts: {
+            total: totalTasks,
+            completed: completedTasks,
+            pending: pendingTasks
+          }
+        };
+      })
+    );
+
+    console.log(`Found ${projects.length} projects with task counts`);
     
-    return NextResponse.json(projects || []);
+    return NextResponse.json(projectsWithTaskCounts || []);
     
   } catch (error) {
     console.error('Projects fetch error:', error);
