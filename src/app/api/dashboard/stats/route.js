@@ -5,17 +5,29 @@ import Project from '@/models/Project';
 import Task from '@/models/Task';
 
 export async function GET() {
+  console.log('📊 Dashboard stats API called');
+  
   try {
-    const { userId } = await auth();
+    // Get the userId from Clerk
+    const session = await auth();
+    const userId = session?.userId;
+    
+    console.log('📊 User ID:', userId);
 
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      console.log('📊 No user ID found');
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
+    console.log('📊 Connecting to database...');
     await connectToDatabase();
 
     // Get total projects
     const totalProjects = await Project.countDocuments({ clerkId: userId });
+    console.log('📊 Total projects:', totalProjects);
 
     // Get task statistics
     const totalTasks = await Task.countDocuments({ clerkId: userId });
@@ -27,6 +39,8 @@ export async function GET() {
       clerkId: userId, 
       status: { $in: ['pending', 'in-progress'] } 
     });
+
+    console.log('📊 Task stats:', { totalTasks, completedTasks, pendingTasks });
 
     // Get recent projects (last 5)
     const recentProjects = await Project.find({ clerkId: userId })
@@ -41,16 +55,23 @@ export async function GET() {
       .limit(5)
       .lean();
 
-    return NextResponse.json({
+    const responseData = {
       totalProjects,
       totalTasks,
       completedTasks,
       pendingTasks,
       recentProjects,
       recentTasks,
-    });
+    };
+
+    console.log('📊 Sending response:', responseData);
+    return NextResponse.json(responseData);
+    
   } catch (error) {
-    console.error('Dashboard stats error:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('📊 Dashboard stats error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
   }
 }
