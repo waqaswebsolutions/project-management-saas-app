@@ -4,7 +4,6 @@ import { useAuth } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
-import { useEffect } from 'react';
 
 export default function DashboardLayout({ children }) {
   const { userId, isLoaded } = useAuth();
