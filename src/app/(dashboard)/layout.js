@@ -7,6 +7,7 @@ import { Header } from '@/components/dashboard/header';
 import { useSidebar } from '@/hooks/use-sidebar';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
+import { BackToTop } from '@/components/ui/back-to-top';
 
 export default function DashboardLayout({ children }) {
   const { userId, isLoaded } = useAuth();
@@ -25,9 +26,9 @@ export default function DashboardLayout({ children }) {
 
   if (!isLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+          <div className="w-8 h-8 border-4 rounded-full animate-spin border-primary-600 border-t-transparent" />
           <p className="mt-2 text-sm text-gray-500">Loading...</p>
         </div>
       </div>
@@ -43,7 +44,7 @@ export default function DashboardLayout({ children }) {
       {/* Mobile sidebar backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity lg:hidden"
+          className="fixed inset-0 z-20 transition-opacity bg-black bg-opacity-50 lg:hidden"
           onClick={closeSidebar}
         />
       )}
@@ -58,10 +59,13 @@ export default function DashboardLayout({ children }) {
         <Sidebar />
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Main content - RESTORED overflow-y-auto */}
+      <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="relative flex-1 p-6 overflow-y-auto">
+          {children}
+          <BackToTop />
+        </main>
       </div>
     </div>
   );
