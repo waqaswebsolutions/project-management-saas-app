@@ -8,9 +8,8 @@ export async function GET() {
   console.log('📊 Dashboard stats API called');
   
   try {
-    // Get the userId from Clerk
-    const session = await auth();
-    const userId = session?.userId;
+    // Get the userId from Clerk - REMOVED await
+    const { userId } = auth();
     
     console.log('📊 User ID:', userId);
 

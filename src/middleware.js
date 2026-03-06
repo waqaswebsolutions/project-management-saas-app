@@ -1,6 +1,6 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 
-// Simple middleware without custom logic
+// This is the correct syntax for Clerk v6+
 export default clerkMiddleware();
 
 export const config = {
