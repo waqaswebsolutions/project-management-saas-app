@@ -10,6 +10,7 @@ import { FolderKanban, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate, getStatusColor } from '@/lib/utils';
 import { ProjectModal } from '@/components/projects/project-modal';
+import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
 
 async function fetchDashboardData() {
   try {
@@ -116,6 +117,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <Card key={index}>
@@ -134,6 +136,12 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Activity Timeline - Added here */}
+      <div className="mt-6">
+        <ActivityTimeline limit={10} />
+      </div>
+
+      {/* Recent Projects and Tasks */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
@@ -206,6 +214,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Project Modal */}
       <ProjectModal
         isOpen={isModalOpen}
         onClose={handleModalClose}

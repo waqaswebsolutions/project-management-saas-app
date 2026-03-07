@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/connect';
 import Task from '@/models/Task';
+import { logActivity } from '@/lib/activity-logger';
 
 export async function PUT(request, { params }) {
   console.log('📥 PUT /api/tasks/[id] - Started');
@@ -42,6 +43,28 @@ export async function PUT(request, { params }) {
     }
 
     console.log('📥 Task updated:', task._id);
+
+    // Log the activity based on what changed
+    if (status === 'completed') {
+      await logActivity({
+        clerkId: userId,
+        projectId: task.projectId,
+        taskId: task._id,
+        action: 'task_completed',
+        details: `Completed task "${task.title}"`,
+        metadata: { taskTitle: task.title }
+      });
+    } else {
+      await logActivity({
+        clerkId: userId,
+        projectId: task.projectId,
+        taskId: task._id,
+        action: 'task_updated',
+        details: `Updated task "${task.title}"`,
+        metadata: { taskTitle: task.title, status }
+      });
+    }
+
     return NextResponse.json(task);
   } catch (error) {
     console.error('📥 PUT Error:', error);
@@ -78,6 +101,17 @@ export async function DELETE(request, { params }) {
     }
 
     console.log('📥 Task deleted:', id);
+
+    // Log the activity
+    await logActivity({
+      clerkId: userId,
+      projectId: task.projectId,
+      taskId: task._id,
+      action: 'task_deleted',
+      details: `Deleted task "${task.title}"`,
+      metadata: { taskTitle: task.title }
+    });
+
     return NextResponse.json(
       { message: 'Task deleted successfully' },
       { status: 200 }

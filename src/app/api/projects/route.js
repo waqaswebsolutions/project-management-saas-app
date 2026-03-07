@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/connect';
 import Project from '@/models/Project';
-import Task from '@/models/Task';
+import { logActivity } from '@/lib/activity-logger';
 
 export async function GET(request) {
   try {
@@ -38,40 +38,9 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Get task counts for each project
-    const projectsWithTaskCounts = await Promise.all(
-      projects.map(async (project) => {
-        const totalTasks = await Task.countDocuments({ 
-          projectId: project._id,
-          clerkId: userId 
-        });
-        
-        const completedTasks = await Task.countDocuments({ 
-          projectId: project._id,
-          clerkId: userId,
-          status: 'completed' 
-        });
-        
-        const pendingTasks = await Task.countDocuments({ 
-          projectId: project._id,
-          clerkId: userId,
-          status: { $in: ['pending', 'in-progress'] }
-        });
-
-        return {
-          ...project,
-          taskCounts: {
-            total: totalTasks,
-            completed: completedTasks,
-            pending: pendingTasks
-          }
-        };
-      })
-    );
-
-    console.log(`Found ${projects.length} projects with task counts`);
+    console.log(`Found ${projects.length} projects`);
     
-    return NextResponse.json(projectsWithTaskCounts || []);
+    return NextResponse.json(projects || []);
     
   } catch (error) {
     console.error('Projects fetch error:', error);
@@ -127,6 +96,15 @@ export async function POST(request) {
 
     const project = await Project.create(projectData);
     console.log('Project created successfully:', project._id);
+
+    // Log the activity
+    await logActivity({
+      clerkId: userId,
+      projectId: project._id,
+      action: 'project_created',
+      details: `Created project "${project.name}"`,
+      metadata: { projectName: project.name }
+    });
 
     return NextResponse.json(project, { status: 201 });
     
