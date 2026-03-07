@@ -8,8 +8,8 @@ export async function GET() {
   console.log('📊 Dashboard stats API called');
   
   try {
-    // Get the userId from Clerk - REMOVED await
-    const { userId } = auth();
+    // CORRECTED: For Clerk v6+, auth() returns a promise that needs await
+    const { userId } = await auth();
     
     console.log('📊 User ID:', userId);
 
