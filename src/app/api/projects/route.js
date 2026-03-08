@@ -2,14 +2,13 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/connect';
 import Project from '@/models/Project';
-import { logActivity } from '@/lib/activity-logger';
+import Task from '@/models/Task'; // Add this import
 
 export async function GET(request) {
   try {
     const { userId } = await auth();
     const { searchParams } = new URL(request.url);
     
-    // Get search parameter
     const search = searchParams.get('search') || '';
 
     if (!userId) {
@@ -19,14 +18,10 @@ export async function GET(request) {
       );
     }
 
-    console.log('Fetching projects for user:', userId, 'Search:', search);
-    
     await connectToDatabase();
 
-    // Build query with search
     let query = { clerkId: userId };
     
-    // Add search filter if search term exists
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -38,21 +33,41 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log(`Found ${projects.length} projects`);
-    
-    return NextResponse.json(projects || []);
+    // Get task counts for each project (for progress bars)
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const totalTasks = await Task.countDocuments({ 
+          projectId: project._id,
+          clerkId: userId 
+        });
+        
+        const completedTasks = await Task.countDocuments({ 
+          projectId: project._id,
+          clerkId: userId,
+          status: 'completed' 
+        });
+
+        return {
+          ...project,
+          taskCounts: {
+            total: totalTasks,
+            completed: completedTasks
+          }
+        };
+      })
+    );
+
+    return NextResponse.json(projectsWithProgress);
     
   } catch (error) {
     console.error('Projects fetch error:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch projects',
-        details: error.message 
-      },
+      { error: 'Failed to fetch projects' },
       { status: 500 }
     );
   }
 }
+
 
 export async function POST(request) {
   try {

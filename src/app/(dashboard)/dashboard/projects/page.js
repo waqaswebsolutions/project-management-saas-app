@@ -1,5 +1,6 @@
 'use client';
 
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Eye, AlertCircle, Search, X, CheckCircle, Clock } from 'lucide-react';
@@ -274,7 +275,7 @@ export default function ProjectsPage() {
           </CardContent>
         </Card>
       ) : (
-        /* Projects Grid with Task Counter Badges */
+        /* Projects Grid with Task Counter Badges and Progress Bar */
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {projects.map((project) => (
             <Card key={project._id} className="flex flex-col transition-shadow duration-200 hover:shadow-xl">
@@ -294,7 +295,7 @@ export default function ProjectsPage() {
                   {truncateText(project.description, 120)}
                 </p>
                 
-                {/* Task Counter Badges - New Addition */}
+                {/* Task Counter Badges */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 rounded-full dark:bg-green-900/30">
                     <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
@@ -310,6 +311,15 @@ export default function ProjectsPage() {
                       </span>
                     </div>
                   )}
+                </div>
+
+                {/* Progress Bar - NEW */}
+                <div className="mb-4">
+                  <ProgressBar 
+                    value={project.taskCounts?.completed || 0} 
+                    max={project.taskCounts?.total || 1} 
+                    showPercentage={true}
+                  />
                 </div>
                 
                 <div className="pt-3 space-y-2 text-xs border-t border-gray-100 sm:text-sm dark:border-gray-800 dark:text-gray-400">
