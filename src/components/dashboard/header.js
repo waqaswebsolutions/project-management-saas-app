@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/hooks/use-sidebar';
 import { UserButton } from '@clerk/nextjs';
+import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   const { toggleSidebar } = useSidebar();
@@ -18,21 +19,13 @@ export function Header() {
       >
         <Menu className="w-5 h-5" />
       </Button>
-
+      
       <div className="flex-1">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h2>
       </div>
 
-      <div className="flex items-center">
-        <UserButton 
-          afterSignOutUrl="/"
-          appearance={{
-            elements: {
-              userButtonAvatarBox: "w-8 h-8",
-              userButtonTrigger: "focus:shadow-none"
-            }
-          }}
-        />
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
       </div>
     </header>
   );
