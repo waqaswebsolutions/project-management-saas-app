@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/hooks/use-sidebar';
 import { UserButton } from '@clerk/nextjs';
 import { ThemeToggle } from './theme-toggle';
+import { GlobalSearch } from './global-search';
+import { KeyboardShortcuts } from './keyboard-shortcuts';
 
 export function Header() {
   const { toggleSidebar } = useSidebar();
@@ -20,12 +22,27 @@ export function Header() {
         <Menu className="w-5 h-5" />
       </Button>
       
-      <div className="flex-1">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h2>
+      <div className="flex items-center flex-1 gap-4">
+        <h2 className="hidden text-lg font-semibold text-gray-900 dark:text-white md:block">
+          Dashboard
+        </h2>
+        <div className="w-full max-w-md">
+          <GlobalSearch />
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
+        <KeyboardShortcuts />
         <ThemeToggle />
+        <UserButton 
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              userButtonAvatarBox: "w-8 h-8",
+              userButtonTrigger: "focus:shadow-none"
+            }
+          }}
+        />
       </div>
     </header>
   );

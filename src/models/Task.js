@@ -42,6 +42,14 @@ const taskSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
+    attachments: [{
+      name: { type: String, required: true },
+      url: { type: String, required: true },
+      size: { type: Number, required: true },
+      type: { type: String, required: true },
+      uploadedAt: { type: Date, default: Date.now },
+      uploadthingKey: { type: String },
+    }],
   },
   {
     timestamps: true,
@@ -54,7 +62,7 @@ taskSchema.index({ clerkId: 1, status: 1 });
 taskSchema.index({ clerkId: 1, dueDate: 1 });
 
 // Update completedAt when status changes to completed
-taskSchema.pre('save', function(next) {
+taskSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();
   }

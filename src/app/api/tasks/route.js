@@ -10,7 +10,6 @@ export async function GET(request) {
     const { userId } = await auth();
     const { searchParams } = new URL(request.url);
     
-    // Get filter parameters
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
@@ -23,10 +22,8 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Build query
     let query = { clerkId: userId };
     
-    // Add search filter
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -34,22 +31,18 @@ export async function GET(request) {
       ];
     }
     
-    // Add status filter
     if (status && status !== 'all') {
       query.status = status;
     }
     
-    // Add priority filter
     if (priority && priority !== 'all') {
       query.priority = priority;
     }
     
-    // Add project filter
     if (projectId && projectId !== 'all') {
       query.projectId = projectId;
     }
 
-    // Determine sort order
     let sortOptions = {};
     switch(sort) {
       case 'oldest':
@@ -61,7 +54,6 @@ export async function GET(request) {
       case 'dueDate-desc':
         sortOptions = { dueDate: -1 };
         break;
-      case 'newest':
       default:
         sortOptions = { createdAt: -1 };
     }
@@ -90,7 +82,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { title, description, projectId, status, priority, dueDate } = body;
+    console.log('📥 POST request body:', body);
+
+    const { title, description, projectId, status, priority, dueDate, attachments } = body;
 
     if (!title || !description || !projectId || !dueDate) {
       return NextResponse.json(
@@ -111,31 +105,48 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const task = await Task.create({
+    // Create task data object
+    const taskData = {
       title,
       description,
       projectId,
       clerkId: userId,
       status: status || 'pending',
       priority: priority || 'medium',
-      dueDate,
-    });
+      dueDate: new Date(dueDate),
+    };
 
-    // Log the activity
-    await logActivity({
-      clerkId: userId,
-      projectId: task.projectId,
-      taskId: task._id,
-      action: 'task_created',
-      details: `Created task "${task.title}"`,
-      metadata: { taskTitle: task.title, status: task.status }
-    });
+    // IMPORTANT: Add attachments if they exist
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      console.log('📥 Adding attachments to task:', attachments);
+      taskData.attachments = attachments;
+    }
+
+    console.log('📥 Final task data:', taskData);
+
+    const task = await Task.create(taskData);
+    console.log('✅ Task created:', task._id);
+    console.log('✅ Attachments saved:', task.attachments?.length || 0);
+
+    // Log activity
+    try {
+      await logActivity({
+        clerkId: userId,
+        projectId: task.projectId,
+        taskId: task._id,
+        action: 'task_created',
+        details: `Created task "${task.title}"`,
+        metadata: { taskTitle: task.title, status: task.status }
+      });
+    } catch (activityError) {
+      console.error('Activity logging failed:', activityError);
+    }
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    console.error('Task creation error:', error);
+    console.error('❌ Task creation error:', error);
     return NextResponse.json(
-      { error: 'Failed to create task' },
+      { error: 'Failed to create task', details: error.message },
       { status: 500 }
     );
   }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, CheckCircle, Clock, Paperclip, Download, FileText, Image } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,6 @@ async function deleteTask(id) {
     },
   });
   
-  // Try to parse the response as JSON
   let data;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
@@ -71,6 +70,19 @@ async function updateTaskStatus({ id, status }) {
   }
   
   return data;
+}
+
+function getFileIcon(fileType) {
+  if (fileType?.startsWith('image/')) {
+    return <Image className="w-4 h-4 text-blue-500" />;
+  }
+  return <FileText className="w-4 h-4 text-gray-500" />;
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 export default function ProjectDetailPage() {
@@ -297,6 +309,37 @@ export default function ProjectDetailPage() {
                         <p className="mt-1 text-sm text-gray-600">
                           {task.description}
                         </p>
+                        
+                        {/* File Attachments Display - Clickable Links */}
+                        {task.attachments?.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Paperclip className="w-3 h-3" />
+                              <span>Attachments ({task.attachments.length})</span>
+                            </div>
+                            <div className="space-y-1">
+                              {task.attachments.map((file, idx) => (
+                                <a
+                                  key={idx}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 p-2 text-xs transition-colors rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                                >
+                                  {getFileIcon(file.type)}
+                                  <span className="flex-1 font-medium text-gray-700 truncate dark:text-gray-300">
+                                    {file.name}
+                                  </span>
+                                  <span className="text-gray-400 text-[10px]">
+                                    {formatFileSize(file.size)}
+                                  </span>
+                                  <Download className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-3 mt-2 text-xs">
                           <span className={`rounded-full px-2 py-0.5 ${getStatusColor(task.status)}`}>
                             {task.status}
