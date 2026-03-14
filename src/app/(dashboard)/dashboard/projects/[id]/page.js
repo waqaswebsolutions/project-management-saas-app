@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate, getStatusColor } from '@/lib/utils';
+import { formatDate, getStatusColor, formatDueText } from '@/lib/utils';
 import { TaskModal } from '@/components/tasks/task-modal';
 import { DeleteConfirmDialog } from '@/components/shared/delete-confirm-dialog';
 
@@ -310,7 +310,7 @@ export default function ProjectDetailPage() {
                           {task.description}
                         </p>
                         
-                        {/* File Attachments Display - Clickable Links */}
+                        {/* File Attachments Display */}
                         {task.attachments?.length > 0 && (
                           <div className="mt-3 space-y-2">
                             <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -345,7 +345,7 @@ export default function ProjectDetailPage() {
                             {task.status}
                           </span>
                           <span className="text-gray-500">
-                            Due: {formatDate(task.dueDate)}
+                            {formatDueText(task.dueDate)}
                           </span>
                         </div>
                       </div>

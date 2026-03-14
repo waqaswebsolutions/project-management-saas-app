@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FolderKanban, CheckSquare, Clock, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
-import { formatDate, getStatusColor } from '@/lib/utils';
+import { formatDate, getStatusColor, formatDueText } from '@/lib/utils';
 import { ProjectModal } from '@/components/projects/project-modal';
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
 
@@ -237,7 +237,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Tasks */}
+        {/* Recent Tasks - WITH RELATIVE TIME DISPLAY */}
         <Card className="col-span-3 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-primary-50 to-transparent dark:from-gray-800">
             <CardTitle className="text-xl">Recent Tasks</CardTitle>
@@ -265,8 +265,9 @@ export default function DashboardPage() {
                       {task.description}
                     </p>
                     <div className="flex items-center justify-between text-xs">
+                      {/* CHANGED: Now using formatDueText for relative time display */}
                       <span className="text-gray-500">
-                        Due: {formatDate(task.dueDate)}
+                        {formatDueText(task.dueDate)}
                       </span>
                       <span className={`px-2 py-1 rounded-full ${getStatusColor(task.priority)}`}>
                         {task.priority}

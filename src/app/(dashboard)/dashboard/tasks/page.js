@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate, getStatusColor } from '@/lib/utils';
+import { formatDate, getStatusColor, formatDueText } from '@/lib/utils';
 
 // Filter options
 const FILTERS = {
@@ -32,7 +32,6 @@ const filterLabels = {
 async function fetchTasks(activeFilter) {
   let url = '/api/tasks';
   
-  // Add filter parameter based on selection
   if (activeFilter !== FILTERS.ALL) {
     url += `?filter=${activeFilter}`;
   }
@@ -338,14 +337,8 @@ export default function TasksPage() {
                           <span className={`rounded-full px-2 py-0.5 ${getStatusColor(task.status)}`}>
                             {task.status}
                           </span>
-                          <span className={`rounded-full px-2 py-0.5 ${
-                            new Date(task.dueDate) < new Date() && task.status !== 'completed'
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                              : new Date(task.dueDate).toDateString() === new Date().toDateString()
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                          }`}>
-                            Due: {formatDate(task.dueDate)}
+                          <span className="text-gray-500">
+                            {formatDueText(task.dueDate)}
                           </span>
                         </div>
                       </div>
