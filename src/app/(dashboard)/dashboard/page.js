@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { formatDate, getStatusColor, formatDueText } from '@/lib/utils';
 import { ProjectModal } from '@/components/projects/project-modal';
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
+import { QuoteWidget } from '@/components/dashboard/quote-widget';
 
 async function fetchDashboardData() {
   try {
@@ -134,6 +135,9 @@ export default function DashboardPage() {
           New Project
         </Button>
       </div>
+
+      {/* Quote Widget - Added here */}
+      <QuoteWidget />
 
       {/* Stats Cards with Enhanced UI */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -265,7 +269,6 @@ export default function DashboardPage() {
                       {task.description}
                     </p>
                     <div className="flex items-center justify-between text-xs">
-                      {/* CHANGED: Now using formatDueText for relative time display */}
                       <span className="text-gray-500">
                         {formatDueText(task.dueDate)}
                       </span>
