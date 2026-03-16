@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Quote } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const quotes = [
   "Small steps every day",
@@ -50,7 +51,22 @@ export function QuoteWidget() {
     }
   }, []);
 
-  if (!mounted) return null;
+  // Show loading skeleton while mounting
+  if (!mounted) {
+    return (
+      <Card className="bg-gradient-to-r from-primary-50 to-transparent dark:from-primary-900/20 border-primary-100 dark:border-primary-800">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Skeleton className="w-5 h-5 rounded-full bg-primary-200 dark:bg-primary-800" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="w-3/4 h-4 bg-primary-200 dark:bg-primary-800" />
+              <Skeleton className="w-1/2 h-4 bg-primary-200 dark:bg-primary-800" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-gradient-to-r from-primary-50 to-transparent dark:from-primary-900/20 border-primary-100 dark:border-primary-800">
